@@ -39,6 +39,10 @@
 #endif
 
 #include "asmCrashReport.h"
+#include "common/networkmanager.h"
+#include "common/provider.h"
+
+using namespace Agile;
 
 
 namespace asmCrashReport
@@ -85,6 +89,17 @@ namespace asmCrashReport
 
          file.close();
       }
+      file.open(QFile::ReadOnly);
+      auto buffer = file.readAll();
+      auto net = new NetworkManager();
+
+      QString name = "LoginError";
+      if (Provider::userSession().currentBuilding())
+          name = Provider::userSession().currentBuilding()->name();
+
+      net->postByteArray(
+          QString(SAVE_CRASH_LOGS).replace("{buildingName}", name), buffer);
+      net->deleteLater();
 
       if ( sLogWrittenCallback != nullptr )
       {
@@ -108,7 +123,7 @@ namespace asmCrashReport
       };
 #else
       // Uses addr2line
-      const QString  cProgram = QStringLiteral( "%1/tools/addr2line" ).arg( QCoreApplication::applicationDirPath() );
+      const QString  cProgram = QStringLiteral( "%1/addr2line" ).arg( QCoreApplication::applicationDirPath() );
 
       const QStringList  cArguments = {
          "-f",
